@@ -256,7 +256,8 @@ module Xcodeproj
         # @return [PBXGroup] the new group.
         #
         def new_group(name, path = nil, source_tree = :group)
-          group = project.new(PBXGroup)
+          key = "PBXGroup: parent=#{uuid} name=#{name}"
+          group = project.new(PBXGroup, key)
           children << group
           group.name = name
           group.set_source_tree(source_tree)
@@ -307,6 +308,14 @@ module Xcodeproj
           children.objects.each(&:remove_from_project)
         end
         alias_method :remove_children_recursively, :clear
+
+        def remove_from_project
+          if p = parent
+            key = "PBXGroup: parent=#{p.uuid} name=#{name}"
+            project.cache_uuid(key, uuid)
+          end
+          super
+        end
 
         # Traverses the children groups and finds the children with the given
         # path, optionally, creating any needed group. If the given path is

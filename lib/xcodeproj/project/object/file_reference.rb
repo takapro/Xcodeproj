@@ -321,6 +321,11 @@ module Xcodeproj
         # @return [void]
         #
         def remove_from_project
+          begin
+            key = "PBXFileReference: parent=#{parent.uuid} name=#{path}"
+            project.cache_uuid(key, uuid)
+          rescue
+          end
           if project_reference = project_reference_metadata
             file_reference_proxies.each(&:remove_from_project)
             target_dependency_proxies.each(&:remove_from_project)

@@ -73,6 +73,7 @@ module Xcodeproj
       @objects_by_uuid = {}
       @generated_uuids = []
       @available_uuids = []
+      @cached_uuids    = {}
       @dirty           = true
       unless skip_initialization.is_a?(TrueClass) || skip_initialization.is_a?(FalseClass)
         raise ArgumentError, '[Xcodeproj] Initialization parameter expected to ' \
@@ -134,6 +135,8 @@ module Xcodeproj
     # @return [PBXProject] the root object of the project.
     #
     attr_reader :root_object
+
+    attr_reader :cached_uuids
 
     # A fast way to see if two {Project} instances refer to the same projects on
     # disk. Use this over {#eql?} when you do not need to compare the full data.
@@ -413,6 +416,10 @@ module Xcodeproj
       UUIDGenerator.new(projects).generate!
     end
 
+    def cache_uuid(key, uuid)
+      cached_uuids[key] = uuid
+    end
+
     public
 
     # @!group Creating objects
@@ -430,11 +437,11 @@ module Xcodeproj
     #
     # @return [AbstractObject] the new object.
     #
-    def new(klass)
+    def new(klass, key = nil)
       if klass.is_a?(String)
         klass = Object.const_get(klass)
       end
-      object = klass.new(self, generate_uuid)
+      object = klass.new(self, generate_uuid(key))
       object.initialize_defaults
       object
     end
@@ -451,7 +458,10 @@ module Xcodeproj
     #
     # @return [String] A UUID unique to the project.
     #
-    def generate_uuid
+    def generate_uuid(key = nil)
+      if key and u = cached_uuids[key] and !objects_by_uuid.key?(u)
+        return u
+      end
       generate_available_uuid_list while @available_uuids.empty?
       @available_uuids.shift
     end
@@ -568,6 +578,14 @@ module Xcodeproj
     #
     def targets
       root_object.targets
+    end
+
+    def find_target(build_file)
+      targets.find do |target|
+        target.build_phases.any? do |phase|
+          phase.files.any? { |file| file.uuid == build_file.uuid }
+        end
+      end
     end
 
     # @return [ObjectList<PBXNativeTarget>] A list of all the targets in the

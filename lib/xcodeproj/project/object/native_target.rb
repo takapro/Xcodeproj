@@ -519,7 +519,8 @@ module Xcodeproj
             phase = is_header_phase ? headers_build_phase : source_build_phase
 
             unless build_file = phase.build_file(file)
-              build_file = project.new(PBXBuildFile)
+              key = "PBXBuildFile: target=#{uuid} file=#{file.uuid}"
+              build_file = project.new(PBXBuildFile, key)
               build_file.file_ref = file
               phase.files << build_file
             end
@@ -546,7 +547,8 @@ module Xcodeproj
         def add_resources(resource_file_references)
           resource_file_references.each do |file|
             next if resources_build_phase.include?(file)
-            build_file = project.new(PBXBuildFile)
+            key = "PBXBuildFile: target=#{uuid} file=#{file.uuid}"
+            build_file = project.new(PBXBuildFile, key)
             build_file.file_ref = file
             resources_build_phase.files << build_file
           end

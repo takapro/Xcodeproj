@@ -77,6 +77,13 @@ module Xcodeproj
           " #{display_name} in #{GroupableHelper.parent(self).display_name} "
         end
 
+        def cache_uuid
+          if t = project.find_target(self)
+            key = "PBXBuildFile: target=#{t.uuid} file=#{file_ref.uuid}"
+            project.cache_uuid(key, uuid)
+          end
+        end
+
         #---------------------------------------------------------------------#
       end
     end

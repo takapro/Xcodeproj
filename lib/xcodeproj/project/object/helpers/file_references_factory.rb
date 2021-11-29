@@ -100,7 +100,8 @@ module Xcodeproj
           #
           def new_file_reference(group, path, source_tree)
             path = Pathname.new(path)
-            ref = group.project.new(PBXFileReference)
+            key = "PBXFileReference: parent=#{group.uuid} name=#{path}"
+            ref = group.project.new(PBXFileReference, key)
             group.children << ref
             GroupableHelper.set_path_with_source_tree(ref, path, source_tree)
             ref.set_last_known_file_type
